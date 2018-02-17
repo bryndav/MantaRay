@@ -116,17 +116,17 @@ void readSensors(){
             digitalWrite (LED, ledVal ^= 1); //Blink the built in led to confirm that data has been sent correctly 
     }
 
-    if(diffCheck(potentValue, 'a')){
-      potentValue = (int) analogRead(analogInPin);
-      Serial.print("Potentiometer value: ");
-      Serial.println(potentValue);
+   if(diffCheck(potentValue, 'a')){
+     potentValue = (int) analogRead(analogInPin);
+     Serial.print("Potentiometer value: ");
+     Serial.println(potentValue);
 
-      message = potentValue + 8000;
-      errMsg = sendValue(message);
+     message = potentValue + 8000;
+     errMsg = sendValue(message);
 
-      if(!errMsg)
-          digitalWrite (LED, ledVal ^= 1); //Blink the built in led to confirm that data has been sent correctly
-    }
+     if(!errMsg)
+         digitalWrite (LED, ledVal ^= 1); //Blink the built in led to confirm that data has been sent correctly
+   }
 
 }
 
@@ -149,8 +149,8 @@ int diffCheck(int prevValue, char val){
         else
             return 1;
     else if(val == 'a')
-        if(((int) analogRead(analogInPin) <  (prevValue + 2)) &&
-        ((int) analogRead(analogInPin) > (prevValue - 2))) //A small filter is introduced to reduce flickering values
+        if(((int) analogRead(analogInPin) <  (prevValue + 5)) &&
+        ((int) analogRead(analogInPin) > (prevValue - 5))) //A small filter is introduced to reduce flickering values
             return 0;
         else
           return 1;
