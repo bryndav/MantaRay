@@ -11,74 +11,37 @@
 ******************************************************************************/
 
 /*** Needed librarys ***/
-#include <Stepper.h>
+#include <Servo.h>
 
 /*** Defenitions ***/
-#define STEPS_PER_MOTOR_REVOLUTION 32
-#define STEPS_PER_OUTPUT_REVOLUTION 32 * 64
-
-#define INJECTOR_OUT_POS 2048
-#define INJECTOR_IN_POS 0
-
-// Pins for pitch motor
-#define motorPin1 2
-#define motorPin2 3
-#define motorPin3 4
-#define motorPin4 5
-
-// Pins for roll motor
-#define motorPin5 6
-#define motorPin6 7
-#define motorPin7 8
-#define motorPin8 9
-
-// Pins for injector motor
-#define motorPin9 10
-#define motorPin10 11
-#define motorPin11 12
-#define motorPin12 13
+#define PWMPin 9
 
 /*** Object initialization ***/
-Stepper calibStepper(STEPS_PER_MOTOR_REVOLUTION, motorPin1, motorPin3, motorPin2, motorPin4);
+Servo calibServo;
 
 /*** Global variables ***/
-int motorPos = 0;
-int wantedMotorPos = 0;
 
 // Defenition and memory space for analog input
 const int analogInPin = A0;
 int currentPotentValue = 0;
-int prevPotentValue = 0;
+int servoOutput = 0;
 
 void setup(){
     // Motor configurations
-    pinMode(motorPin1, OUTPUT);
-    pinMode(motorPin2, OUTPUT);
-    pinMode(motorPin3, OUTPUT);
-    pinMode(motorPin4, OUTPUT);
-    calibStepper.setSpeed(700);
+    calibServo.attach(PWMPin);
+    calibServo.write(0);
+    delay(50);
 
     Serial.begin(9600);
 }
 
 void loop(){
     currentPotentValue = readAnalogInput();
-
-    if((currentPotentValue <  (prevPotentValue + 2)) && (currentPotentValue > (prevPotentValue - 2))){
-        prevPotentValue = currentPotentValue;
-        wantedMotorPos = motorPos - (prevPotentValue - 380);
-    }
-
-    // If a wanted position does not correspond with a wanted one. Step said motor one step
-    if(motorPos != wantedMotorPos){
-        if (motorPos > wantedMotorPos){
-            calibStepper.step(-1);
-            motorPos = motorPos - 1;
-        }else{
-            calibStepper.step(1);
-            motorPos = motorPos + 1;
-        }
-    }
+    servoOutput = map(currentPotentValue, 0, 690, 0, 180);
+    Serial.print("Servo output: ");
+    Serial.println(servoOutput);
+    calibServo.write(servoOutput);
+    delay(10);
 }
 
 int readAnalogInput(){
