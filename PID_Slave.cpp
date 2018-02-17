@@ -8,6 +8,7 @@
 ******************************************************************************/
 
 /*** Needed librarys ***/
+#include <Servo.h>
 #include <Stepper.h>
 #include <Wire.h>
 
@@ -26,42 +27,31 @@
 #define motorPin3 4
 #define motorPin4 5
 
-// Roll motor
-#define motorPin5 6
-#define motorPin6 7
-#define motorPin7 8
-#define motorPin8 9
-
-// Injector motor
-#define motorPin9 10
-#define motorPin10 11
-#define motorPin11 12
-#define motorPin12 13
+// PWN Pins
+#define PWMPin1   3
+#define PWMPin2   5
 
 /*** Object initialization ***/
-Stepper pitchStepper(STEPS_PER_MOTOR_REVOLUTION, motorPin1, motorPin3, motorPin2, motorPin4);
-Stepper rollStepper(STEPS_PER_MOTOR_REVOLUTION, motorPin5, motorPin7, motorPin6, motorPin8);
-Stepper injectorStepper(STEPS_PER_MOTOR_REVOLUTION, motorPin9, motorPin11, motorPin10, motorPin12);
+Servo pitchServo;
+Servo rollServo;
+Stepper injectorStepper(STEPS_PER_MOTOR_REVOLUTION, motorPin1, motorPin3, motorPin2, motorPin4);
 
 /*** Global variables ***/
 int ledVal = 0;
+unsigned long timeStamp = 0;
+int i;
 
 // Current motor positions
-int pitchPos = 0;
-int heading = 0;
-int rollPos = 0;
-int injectorPos = 0;
+int injPos = 0;
+int rollAngle = 0;
 
 // Wanted motor positions
-int wantedPitchPos = 0;
-int wantedHeading = 0;
-int wantedRoll = 0;
-int wantedInjectorPos = 0;
+int wantedInjPos = 0;
 
 // PID-connected variables
 const double timeConstant = 0.04;
-const int maxOutput = 5120;
-const int minOutput = -5120;
+const int maxOutput = 180;
+const int minOutput = 0;
 
 double propVal;
 double deriveVal;
@@ -84,17 +74,10 @@ void setup(){
     pinMode(motorPin2, OUTPUT);
     pinMode(motorPin3, OUTPUT);
     pinMode(motorPin4, OUTPUT);
-    pinMode(motorPin5, OUTPUT);
-    pinMode(motorPin6, OUTPUT);
-    pinMode(motorPin7, OUTPUT);
-    pinMode(motorPin8, OUTPUT);
-    pinMode(motorPin9, OUTPUT);
-    pinMode(motorPin10,OUTPUT);
-    pinMode(motorPin11, OUTPUT);
-    pinMode(motorPin12, OUTPUT);
-    pitchStepper.setSpeed(700);
-    rollStepper.setSpeed(700);
     injectorStepper.setSpeed(700);
+    
+    pitchServo.attach(PWMPin1);
+    rollServo.attach(PWMPin2);
 
     Serial.begin(9600);
 }
@@ -133,6 +116,38 @@ void resetPIDVal(){
 }
 
 void receiveEvent (int length){
+	if(length == 4){
 
+		float message;
+	
+		Serial.print("Time since last message: ");
+		Serial.println((millis() - timeStamp));
+		timeStamp = millis();
 
+		for(i = 4; i > 0; i--){
+			if(i > 1){
+				message |= Wire.read();
+				message <<= i * 8;
+			}else
+				message |= Wire.read();
+		}
+
+		while (Wire.available() > 0)
+			Wire.read();
+
+		calcCompleted = false;
+		currentAngle = message;
+
+	}else if(length == 2){
+		int message = 0;
+
+		message = Wire.read();
+		message <<= 8;
+		message |= Wire.read();
+
+		while (Wire.available() > 0)
+			Wire.read();
+
+		rollAngel = message;
+	}
 }
